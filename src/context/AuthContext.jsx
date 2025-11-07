@@ -6,7 +6,7 @@ const AuthContext = createContext();
 
 // Axios instance with base URL
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: 'https://backend-covid-19-vaccination-certificates.onrender.com/api',
 });
 
 // Set up axios interceptor to add token to requests

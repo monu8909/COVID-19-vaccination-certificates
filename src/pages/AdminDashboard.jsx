@@ -270,7 +270,7 @@ const AdminDashboard = () => {
                           <Button
                             size="small"
                             variant="outlined"
-                            href={`/api/certificates/${certificate._id}/file`}
+                            href={`https://backend-covid-19-vaccination-certificates.onrender.com/api/certificates/${certificate._id}/file`}
                             target="_blank"
                             startIcon={<Visibility />}
                           >
