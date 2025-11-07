@@ -12,7 +12,7 @@ import {
   Alert,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle, Pending, Cancel } from '@mui/icons-material';
+import { CheckCircle, Pending, Cancel, Star, EmojiEvents } from '@mui/icons-material';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
 
@@ -23,16 +23,21 @@ const Dashboard = () => {
   const [certificates, setCertificates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [successMessage, setSuccessMessage] = useState('');
+  const [rewardPoints, setRewardPoints] = useState(0);
+  const [userData, setUserData] = useState(null);
 
-  // Fetch user's certificates
+  // Fetch user's certificates and profile
   useEffect(() => {
     fetchCertificates();
+    fetchUserProfile();
   }, []);
 
   const fetchCertificates = async () => {
     try {
       const response = await api.get('/certificates/my-certificates');
       setCertificates(response.data.certificates);
+      // Refresh user profile after fetching certificates to get updated points
+      await fetchUserProfile();
     } catch (error) {
       console.error('Error fetching certificates:', error);
     } finally {
@@ -40,11 +45,38 @@ const Dashboard = () => {
     }
   };
 
-  // Check for verified certificates and show success message
+  const fetchUserProfile = async () => {
+    try {
+      const response = await api.get('/auth/me');
+      setUserData(response.data.user);
+      // Set reward points from API response
+      const points = response.data.user.rewardPoints || 0;
+      setRewardPoints(points);
+      console.log('Reward Points:', response); // Debug log to verify points
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+    }
+  };
+
+  // Check for verified certificates and show success message with reward points
   useEffect(() => {
     const verifiedCert = certificates.find((cert) => cert.status === 'verified');
     if (verifiedCert) {
-      setSuccessMessage('Your certificate has been verified successfully!');
+      const verifiedCount = certificates.filter((cert) => cert.status === 'verified').length;
+      setSuccessMessage(
+        `Your certificate has been verified successfully! You earned ${verifiedCount * 100} reward points! 🎉`
+      );
+    }
+  }, [certificates]);
+
+  // Refresh user data when certificates change (to get updated reward points)
+  useEffect(() => {
+    if (certificates.length > 0) {
+      // Add a small delay to ensure backend has updated points
+      const timer = setTimeout(() => {
+        fetchUserProfile();
+      }, 500);
+      return () => clearTimeout(timer);
     }
   }, [certificates]);
 
@@ -90,6 +122,37 @@ const Dashboard = () => {
         <Typography variant="h4" gutterBottom>
           Welcome, {user?.name || user?.email}!
         </Typography>
+
+        {/* Reward Points Card */}
+        <Card
+          sx={{
+            mb: 3,
+            background: 'linear-gradient(135deg, #3A9BDC 0%, #2A7BC8 100%)',
+            color: 'white',
+          }}
+        >
+          <CardContent>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <EmojiEvents sx={{ fontSize: 40 }} />
+                <Box>
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                    Reward Points
+                  </Typography>
+                  <Typography variant="h3" sx={{ fontWeight: 700, mt: 1 }}>
+                    {rewardPoints}
+                  </Typography>
+                  <Typography variant="body2" sx={{ opacity: 0.9, mt: 0.5 }}>
+                    {certificates.filter((c) => c.status === 'verified').length > 0
+                      ? `${certificates.filter((c) => c.status === 'verified').length} verified certificate(s) × 100 points`
+                      : 'Earn 100 points for each verified certificate'}
+                  </Typography>
+                </Box>
+              </Box>
+              <Star sx={{ fontSize: 60, opacity: 0.3 }} />
+            </Box>
+          </CardContent>
+        </Card>
 
         {successMessage && (
           <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccessMessage('')}>
