@@ -16,12 +16,19 @@ const Logo = ({ onClick, sx = {} }) => {
       }}
     >
       <img
-        component="img"
         src="/logo.png"
         alt="CovidVax Portal Logo"
         width={225}
         height={70}
-       
+        style={{
+          display: 'block',
+          maxWidth: '100%',
+          height: 'auto',
+        }}
+        onError={(e) => {
+          console.warn('Logo image not found at /logo.png');
+          e.target.style.display = 'none';
+        }}
       />
     </Box>
   );
